@@ -1,0 +1,33 @@
+{
+  "name": "use-pagination-firestore",
+  "version": "0.0.1",
+  "description": "A non-cumulative pagination hook for use with Firestore",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare" : "npm run build",
+    "prepublishOnly" : "npm run lint",
+    "preversion" : "npm run lint",
+    "version" : "npm run format && git add -A src",
+    "postversion" : "git push && git push --tags"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "keywords": ["firestore", "firebase", "pagination", "hooks"],
+  "author": "Premshree Pillai",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^16.9.36",
+    "firebase": "^7.15.1",
+    "prettier": "^2.0.5",
+    "react": "^16.13.1",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.9.5"
+  }
+}
