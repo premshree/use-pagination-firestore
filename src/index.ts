@@ -1,20 +1,21 @@
 import { firestore } from 'firebase/app';
 import { MutableRefObject, useEffect, useReducer, useRef } from 'react';
 
-interface PaginationOptions {
+export interface PaginationOptions {
   limit?: number;
 }
 
 interface State<T> {
   query: firestore.Query | undefined;
   queryRef: undefined | MutableRefObject<firestore.Query | undefined>;
+  lastQuery: firestore.Query | undefined;
   firstDocRef: undefined | MutableRefObject<firestore.QueryDocumentSnapshot | undefined>;
-  items: T[];
   docs: firestore.QueryDocumentSnapshot[];
   firstDoc: firestore.QueryDocumentSnapshot | undefined;
   lastDoc: firestore.QueryDocumentSnapshot | undefined;
   prevQuery: firestore.Query | undefined;
   nextQuery: firestore.Query | undefined;
+  items: T[];
   isLoading: boolean;
   isStart: boolean;
   isEnd: boolean;
@@ -62,6 +63,7 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
         isLoading: true,
       };
     }
+
     case 'LOAD': {
       const { value } = action.payload;
       const docs = value.docs;
@@ -72,10 +74,10 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
 
       const firstDoc = docs[0];
       const lastDoc = docs[docs.length - 1];
+      const queryFromRef = state.queryRef ? state.queryRef.current : undefined;
       const prevQuery =
-        (state.queryRef?.current && state.queryRef.current.endBefore(firstDoc).limitToLast(state.limit)) || undefined;
-      const nextQuery =
-        (state.queryRef?.current && state.queryRef.current.startAfter(lastDoc).limit(state.limit)) || undefined;
+        queryFromRef && firstDoc ? queryFromRef.endBefore(firstDoc).limitToLast(state.limit) : state.lastQuery;
+      const nextQuery = queryFromRef && lastDoc ? queryFromRef.startAfter(lastDoc).limit(state.limit) : state.nextQuery;
 
       const firstDocRef = state.firstDocRef;
       if (firstDocRef && firstDocRef.current === undefined) {
@@ -84,6 +86,7 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
 
       return {
         ...state,
+        lastQuery: items.length > 0 ? state.query : undefined,
         isLoading: false,
         firstDoc,
         firstDocRef,
@@ -91,7 +94,7 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
         prevQuery,
         nextQuery,
         items,
-        isStart: firstDocRef?.current?.isEqual(firstDoc) || false,
+        isStart: (firstDoc && firstDocRef?.current?.isEqual(firstDoc)) || false,
         isEnd: items.length < state.limit,
       };
     }
@@ -111,23 +114,24 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
         query: state.prevQuery,
       };
     }
+
     default: {
       return defaultGuard(state, action);
     }
   }
-  return state;
 };
 
 const initialState = {
   query: undefined,
   queryRef: undefined,
+  lastQuery: undefined,
   firstDocRef: undefined,
-  items: [],
   docs: [],
   firstDoc: undefined,
   lastDoc: undefined,
   prevQuery: undefined,
   nextQuery: undefined,
+  items: [],
   isLoading: true,
   isStart: true,
   isEnd: false,
