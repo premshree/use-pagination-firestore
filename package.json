@@ -18,6 +18,10 @@
   "files": [
     "lib/**/*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/premshree/use-pagination-firestore.git"
+  },
   "keywords": ["firestore", "firebase", "pagination", "hooks"],
   "author": "Premshree Pillai",
   "license": "ISC",
