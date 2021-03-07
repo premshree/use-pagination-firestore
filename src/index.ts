@@ -1,20 +1,20 @@
-import { firestore } from 'firebase/app';
 import { MutableRefObject, useEffect, useReducer, useRef } from 'react';
+import { Query, QuerySnapshot, QueryDocumentSnapshot, DocumentData } from '@firebase/firestore-types';
 
 export interface PaginationOptions {
   limit?: number;
 }
 
 interface State<T> {
-  query: firestore.Query | undefined;
-  queryRef: undefined | MutableRefObject<firestore.Query | undefined>;
-  lastQuery: firestore.Query | undefined;
-  firstDocRef: undefined | MutableRefObject<firestore.QueryDocumentSnapshot | undefined>;
-  docs: firestore.QueryDocumentSnapshot[];
-  firstDoc: firestore.QueryDocumentSnapshot | undefined;
-  lastDoc: firestore.QueryDocumentSnapshot | undefined;
-  prevQuery: firestore.Query | undefined;
-  nextQuery: firestore.Query | undefined;
+  query: Query | undefined;
+  queryRef: undefined | MutableRefObject<Query | undefined>;
+  lastQuery: Query | undefined;
+  firstDocRef: undefined | MutableRefObject<QueryDocumentSnapshot | undefined>;
+  docs: QueryDocumentSnapshot[];
+  firstDoc: QueryDocumentSnapshot | undefined;
+  lastDoc: QueryDocumentSnapshot | undefined;
+  prevQuery: Query | undefined;
+  nextQuery: Query | undefined;
   items: T[];
   isLoading: boolean;
   isStart: boolean;
@@ -29,9 +29,9 @@ type Action =
       'SET-QUERY',
       {
         payload: {
-          query: firestore.Query;
-          queryRef: MutableRefObject<firestore.Query | undefined>;
-          firstDocRef: MutableRefObject<firestore.QueryDocumentSnapshot | undefined>;
+          query: Query;
+          queryRef: MutableRefObject<Query | undefined>;
+          firstDocRef: MutableRefObject<QueryDocumentSnapshot | undefined>;
           limit: number;
         };
       }
@@ -40,8 +40,8 @@ type Action =
       'LOAD',
       {
         payload: {
-          value: firestore.QuerySnapshot;
-          query: firestore.Query;
+          value: QuerySnapshot;
+          query: Query;
         };
       }
     >
@@ -138,10 +138,10 @@ const initialState = {
   limit: 10,
 };
 
-const usePagination = <T = firestore.DocumentData>(firestoreQuery: firestore.Query, options: PaginationOptions) => {
+const usePagination = <T = DocumentData>(firestoreQuery: Query, options: PaginationOptions) => {
   const [state, dispatch] = useReducer(getReducer<T>(), initialState);
-  const queryRef = useRef<firestore.Query | undefined>(undefined);
-  const firstDocRef = useRef<firestore.QueryDocumentSnapshot | undefined>(undefined);
+  const queryRef = useRef<Query | undefined>(undefined);
+  const firstDocRef = useRef<QueryDocumentSnapshot | undefined>(undefined);
 
   const { limit = 10 } = options;
 
@@ -165,10 +165,12 @@ const usePagination = <T = firestore.DocumentData>(firestoreQuery: firestore.Que
   useEffect(() => {
     if (state.query !== undefined) {
       const unsubscribe = state.query.onSnapshot((snap) => {
-        dispatch({
-          type: 'LOAD',
-          payload: { value: snap, query: state.query as firestore.Query },
-        });
+        if (state.query) {
+          dispatch({
+            type: 'LOAD',
+            payload: { value: snap, query: state.query },
+          });
+        }
       });
 
       return () => unsubscribe();
