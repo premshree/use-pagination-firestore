@@ -30,11 +30,13 @@
   ],
   "author": "Premshree Pillai",
   "license": "ISC",
+  "peerDependencies": {
+    "react": "^16.13.1"
+  },
   "devDependencies": {
     "@types/react": "^16.9.36",
     "firebase": "^8.2.10",
     "prettier": "^2.0.5",
-    "react": "^16.13.1",
     "tslint": "^6.1.2",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.9.5"
