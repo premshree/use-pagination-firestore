@@ -1,11 +1,11 @@
 import { MutableRefObject, useEffect, useReducer, useRef } from 'react';
-import { Query, QuerySnapshot, QueryDocumentSnapshot, DocumentData } from '@firebase/firestore-types';
+import { Query, QuerySnapshot, QueryDocumentSnapshot, DocumentData, DocumentSnapshot } from '@firebase/firestore-types';
 
 export interface PaginationOptions {
   limit?: number;
 }
 
-interface State<T> {
+interface State<T extends DocumentData> {
   query: Query | undefined;
   queryRef: undefined | MutableRefObject<Query | undefined>;
   lastQuery: Query | undefined;
@@ -15,7 +15,7 @@ interface State<T> {
   lastDoc: QueryDocumentSnapshot | undefined;
   prevQuery: Query | undefined;
   nextQuery: Query | undefined;
-  items: T[];
+  items: (T & Pick<DocumentSnapshot, 'id'>)[];
   isLoading: boolean;
   isStart: boolean;
   isEnd: boolean;
@@ -50,7 +50,7 @@ type Action =
 
 const defaultGuard = <S>(state: S, a: never) => state;
 
-const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
+const getReducer = <T extends DocumentData>() => (state: State<T>, action: Action): State<T> => {
   switch (action.type) {
     case 'SET-QUERY': {
       const { query, queryRef, firstDocRef, limit } = action.payload;
@@ -68,9 +68,10 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
       const { value } = action.payload;
       const docs = value.docs;
 
-      const items = docs.map((doc) => {
-        return doc.data() as T;
-      });
+      const items = docs.map(doc => ({
+        ...doc.data() as T,
+        id: doc.id
+      }));
 
       const firstDoc = docs[0];
       const lastDoc = docs[docs.length - 1];
@@ -86,6 +87,7 @@ const getReducer = <T>() => (state: State<T>, action: Action): State<T> => {
 
       return {
         ...state,
+        docs,
         lastQuery: items.length > 0 ? state.query : undefined,
         isLoading: false,
         firstDoc,
@@ -138,7 +140,7 @@ const initialState = {
   limit: 10,
 };
 
-const usePagination = <T = DocumentData>(firestoreQuery: Query, options: PaginationOptions) => {
+const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: PaginationOptions) => {
   const [state, dispatch] = useReducer(getReducer<T>(), initialState);
   const queryRef = useRef<Query | undefined>(undefined);
   const firstDocRef = useRef<QueryDocumentSnapshot | undefined>(undefined);
@@ -178,6 +180,7 @@ const usePagination = <T = DocumentData>(firestoreQuery: Query, options: Paginat
   }, [state.query]);
 
   return {
+    docs: state.docs,
     items: state.items,
     isLoading: state.isLoading,
     isStart: state.isStart,
