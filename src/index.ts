@@ -68,9 +68,9 @@ const getReducer = <T extends DocumentData>() => (state: State<T>, action: Actio
       const { value } = action.payload;
       const docs = value.docs;
 
-      const items = docs.map(doc => ({
-        ...doc.data() as T,
-        id: doc.id
+      const items = docs.map((doc) => ({
+        ...(doc.data() as T),
+        id: doc.id,
       }));
 
       const firstDoc = docs[0];
