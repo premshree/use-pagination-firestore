@@ -81,6 +81,64 @@ const RecentPerfumes = () => {
 export default RecentPerfumes;
 ```
 
+You can also change query during runtime. Hook will detect new query and start pagination from the beginning.
+Here is an example of controlling query's `limit` and `orderDirection` by React's state:
+
+```jsx
+type ORDER_DIRECTION = 'asc' | 'desc';
+const DEFAULT_PAGE_SIZE = 10;
+
+const RecentPerfumes = () => {
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+    const [order, setOrder] = useState<ORDER_DIRECTION>('desc');
+    const {
+        items,
+        isLoading,
+        isStart,
+        isEnd,
+        getPrev,
+        getNext,
+    } = usePagination<Perfume>(
+        firebase
+            .firestore()
+            .collection("/perfumes")
+            .orderBy("updated", order),
+        {
+            limit: pageSize
+        }
+    );
+
+    if (isLoading) {
+        return <Loading/>;
+    }
+
+    return (
+        <Grid container>
+            <Grid item xs={12}>
+                <Grid container justify="flex-end">
+                    <Grid item>
+                        <PageSizeSelect pageSize={pageSize} onChange={setPageSize} />
+                        <OrderDirectionSelect order={order} onChange={setOrder} />
+                        <IconButton onClick={getPrev} disabled={isStart}>
+                            <NavigateBeforeIcon/>
+                        </IconButton>
+                        <IconButton onClick={getNext} disabled={isEnd}>
+                            <NavgateNextIcon/>
+                        </IconButton>
+                    </Grid>
+                </Grid>
+            </Grid>
+            {items.map((perfume, idx) => {
+                return (
+                    <Grid item xs={12} sm={12} md={6} lg={6} key={`recent-perfume-${idx}`}>
+                        <PerfumeCard perfume={perfume} size="medium"/>
+                    </Grid>
+                );
+            })}
+        </Grid>
+    );
+}
+```
 ## Caveats
 
 Paginating Firestore documents relies on [query cursors](https://firebase.google.com/docs/firestore/query-data/query-cursors). It's not easy to know
