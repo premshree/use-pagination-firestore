@@ -148,10 +148,17 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
   const { limit = 10 } = options;
 
   useEffect(() => {
-    if (firestoreQuery !== undefined) {
-      if (queryRef.current === undefined) {
-        queryRef.current = firestoreQuery;
+    if (firestoreQuery !== undefined ) {
+      if (
+        queryRef?.current &&
+        firestoreQuery.isEqual(queryRef.current) &&
+        limit === state.limit
+      ) {
+        return;
       }
+
+      queryRef.current = firestoreQuery;
+      firstDocRef.current = undefined;
       dispatch({
         type: 'SET-QUERY',
         payload: {
@@ -162,7 +169,7 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
         },
       });
     }
-  }, []);
+  }, [firestoreQuery, limit, state.limit]);
 
   useEffect(() => {
     if (state.query !== undefined) {
