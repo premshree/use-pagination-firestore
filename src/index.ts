@@ -161,11 +161,11 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
   const queryRef = useRef<Query | undefined>(undefined);
   const firstDocRef = useRef<QueryDocumentSnapshot | undefined>(undefined);
 
-  const { limit = 10 } = options;
+  const { limit: limitOpt = 10 } = options;
 
   useEffect(() => {
     if (firestoreQuery !== undefined) {
-      if (queryRef?.current && queryEqual(firestoreQuery, queryRef.current) && limit === state.limit) {
+      if (queryRef?.current && queryEqual(firestoreQuery, queryRef.current) && limitOpt === state.limit) {
         return;
       }
 
@@ -177,11 +177,11 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
           query: firestoreQuery,
           queryRef,
           firstDocRef,
-          limit,
+          limit: limitOpt
         },
       });
     }
-  }, [firestoreQuery, limit, state.limit]);
+  }, [firestoreQuery, limitOpt, state.limit]);
 
   useEffect(() => {
     if (state.query !== undefined) {
