@@ -1,5 +1,19 @@
 import { MutableRefObject, useEffect, useReducer, useRef } from 'react';
-import { Query, QuerySnapshot, QueryDocumentSnapshot, DocumentData, DocumentSnapshot } from '@firebase/firestore-types';
+import {
+  Query,
+  QuerySnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,
+  DocumentSnapshot,
+  queryEqual,
+  snapshotEqual,
+  endBefore,
+  limit,
+  limitToLast,
+  onSnapshot,
+  query,
+  startAfter
+} from 'firebase/firestore';
 
 export interface PaginationOptions {
   limit?: number;
@@ -53,13 +67,13 @@ const defaultGuard = <S>(state: S, a: never) => state;
 const getReducer = <T extends DocumentData>() => (state: State<T>, action: Action): State<T> => {
   switch (action.type) {
     case 'SET-QUERY': {
-      const { query, queryRef, firstDocRef, limit } = action.payload;
+      const { query: queryObj, queryRef, firstDocRef, limit: limitNum } = action.payload;
       return {
         ...state,
-        query: query.limit(limit),
+        query: query(queryObj, limit(limitNum)),
         queryRef,
         firstDocRef,
-        limit,
+        limit: limitNum,
         isLoading: true,
       };
     }
@@ -73,13 +87,15 @@ const getReducer = <T extends DocumentData>() => (state: State<T>, action: Actio
         id: doc.id,
       }));
 
+      
+
       const firstDoc = docs[0];
       const lastDoc = docs[docs.length - 1];
       const queryFromRef = state.queryRef ? state.queryRef.current : undefined;
       const prevQuery =
-        queryFromRef && firstDoc ? queryFromRef.endBefore(firstDoc).limitToLast(state.limit) : state.lastQuery;
-      const nextQuery = queryFromRef && lastDoc ? queryFromRef.startAfter(lastDoc).limit(state.limit) : state.nextQuery;
-
+        queryFromRef && firstDoc ? query(queryFromRef, endBefore(firstDoc), limitToLast(state.limit)) : state.lastQuery;
+      const nextQuery = queryFromRef && lastDoc ? query(queryFromRef, startAfter(lastDoc), limit(state.limit)) : state.nextQuery;
+      
       const firstDocRef = state.firstDocRef;
       if (firstDocRef && firstDocRef.current === undefined) {
         firstDocRef.current = firstDoc;
@@ -96,7 +112,7 @@ const getReducer = <T extends DocumentData>() => (state: State<T>, action: Actio
         prevQuery,
         nextQuery,
         items,
-        isStart: (firstDoc && firstDocRef?.current?.isEqual(firstDoc)) || false,
+        isStart: (firstDoc && firstDocRef?.current && snapshotEqual(firstDoc, firstDocRef.current)) || false,
         isEnd: items.length < state.limit,
       };
     }
@@ -149,7 +165,7 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
 
   useEffect(() => {
     if (firestoreQuery !== undefined) {
-      if (queryRef?.current && firestoreQuery.isEqual(queryRef.current) && limit === state.limit) {
+      if (queryRef?.current && queryEqual(firestoreQuery, queryRef.current) && limit === state.limit) {
         return;
       }
 
@@ -169,7 +185,7 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
 
   useEffect(() => {
     if (state.query !== undefined) {
-      const unsubscribe = state.query.onSnapshot((snap) => {
+      const unsubscribe = onSnapshot(state.query, (snap) => {
         if (state.query) {
           dispatch({
             type: 'LOAD',
