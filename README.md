@@ -6,6 +6,10 @@ This hook is similar, but the not the same as
 provides _non cumulative_ pagination and does _not_ maintain references to previous
 documents, so it might be suitable for large document sets.
 
+## Support for Firebase 9
+
+Versions 0.6.x add support for Firebase 9 and are backwards _incompatible_ with previous versions of Firebase. For support for Firebase 8.x, use versions 5.x of `use-pagination-firestore`.
+
 ## Install
 
 ```
@@ -22,14 +26,18 @@ and [Firestore](https://firebase.google.com/docs/firestore/). You can see it liv
 import React from 'react';
 import Grid from "@material-ui/core/Grid";
 import PerfumeCard from "./search/PerfumeCard";
-import {usePagination} from "use-pagination-firestore";
+import { usePagination } from "use-pagination-firestore";
 import Loading from "./Loading";
 import {
     NavigateNext as NavgateNextIcon,
     NavigateBefore as NavigateBeforeIcon
 } from '@material-ui/icons';
-import {IconButton} from "@material-ui/core";
-import firebase from "firebase/app";
+import { IconButton } from "@material-ui/core";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, query, orderBy } from "firebase/firestore";
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 const RecentPerfumes = () => {
     const {
@@ -40,10 +48,7 @@ const RecentPerfumes = () => {
         getPrev,
         getNext,
     } = usePagination<Perfume>(
-        firebase
-            .firestore()
-            .collection("/perfumes")
-            .orderBy("updated", "desc"),
+        query(collection(db, "/perfumes"), orderBy("updated", "desc")),
         {
             limit: 10
         }
@@ -99,10 +104,7 @@ const RecentPerfumes = () => {
         getPrev,
         getNext,
     } = usePagination<Perfume>(
-        firebase
-            .firestore()
-            .collection("/perfumes")
-            .orderBy("updated", order),
+        query(collection(db, "/perfumes"), orderBy("updated", "desc")),
         {
             limit: pageSize
         }
