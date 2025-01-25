@@ -12,7 +12,7 @@ import {
   limitToLast,
   onSnapshot,
   query,
-  startAfter
+  startAfter,
 } from 'firebase/firestore';
 
 export interface PaginationOptions {
@@ -89,15 +89,14 @@ const getReducer = <T extends DocumentData>() => (state: State<T>, action: Actio
         id: doc.id,
       }));
 
-      
-
       const firstDoc = docs[0];
       const lastDoc = docs[docs.length - 1];
       const queryFromRef = state.queryRef ? state.queryRef.current : undefined;
       const prevQuery =
         queryFromRef && firstDoc ? query(queryFromRef, endBefore(firstDoc), limitToLast(state.limit)) : state.lastQuery;
-      const nextQuery = queryFromRef && lastDoc ? query(queryFromRef, startAfter(lastDoc), limit(state.limit)) : state.nextQuery;
-      
+      const nextQuery =
+        queryFromRef && lastDoc ? query(queryFromRef, startAfter(lastDoc), limit(state.limit)) : state.nextQuery;
+
       const firstDocRef = state.firstDocRef;
       if (firstDocRef && firstDocRef.current === undefined) {
         firstDocRef.current = firstDoc;
@@ -183,7 +182,7 @@ const usePagination = <T extends DocumentData>(firestoreQuery: Query, options: P
           query: firestoreQuery,
           queryRef,
           firstDocRef,
-          limit: limitOpt
+          limit: limitOpt,
         },
       });
     }
