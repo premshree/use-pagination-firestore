@@ -103,6 +103,7 @@ const RecentPerfumes = () => {
         isEnd,
         getPrev,
         getNext,
+        currentPage,
     } = usePagination<Perfume>(
         query(collection(db, "/perfumes"), orderBy("updated", "desc")),
         {
@@ -124,6 +125,7 @@ const RecentPerfumes = () => {
                         <IconButton onClick={getPrev} disabled={isStart}>
                             <NavigateBeforeIcon/>
                         </IconButton>
+                        <Box component="span">Page {currentPage}</Box>
                         <IconButton onClick={getNext} disabled={isEnd}>
                             <NavgateNextIcon/>
                         </IconButton>
